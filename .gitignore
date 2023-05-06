@@ -1,0 +1,4 @@
+.env
+pnpm-lock.yaml
+.vercel
+pacage-lock.json

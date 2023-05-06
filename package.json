@@ -1,0 +1,23 @@
+{
+	"name": "unshort-api",
+	"version": "1.0.0",
+	"description": "API pour obtenir le lien original d'un lien raccourci",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "nodemon index.js"
+	},
+	"author": "JohanStickman",
+	"license": "MIT",
+	"dependencies": {
+		"@fastify/cors": "^8.2.1",
+		"@supabase/supabase-js": "^2.21.0",
+		"dotenv": "^16.0.3",
+		"fastify": "^4.15.0",
+		"node-fetch": "2.6.9",
+		"safe-browse-url-lookup": "^0.1.1"
+	},
+	"devDependencies": {
+		"nodemon": "^2.0.13"
+	}
+}
