@@ -88,10 +88,63 @@ function simplifyURL(string){
 
 // Obtenir une URL à partir d'une balise meta refresh
 function extractUrlFromMetaString(string){
-	const regex = /<meta\s+http-equiv=["']refresh["']\s+content=["']\d+;\s*url=([^"']+)["']\s*\/?>/i
-	const match = regex.exec(string)
+	var regex = /<meta\s+http-equiv=["']refresh["']\s+content=["']\d+;\s*url=([^"']+)["']\s*\/?>/i
+	var match = regex.exec(string)
+	if(!match){
+		regex = /<meta\s+content=["']\d+;\s*url=([^"']+)["']\s+http-equiv=["']refresh["']\s*\/?>/i
+		match = regex.exec(string)
+	}
 	return match ? match[1] : null
-}  
+}
+
+// Obtenir le lien original depuis Grabify
+async function getGrabifyURL(link){
+	// Faire une première requête pour obtenir certaines variables
+	var controller = new AbortController()
+	var timeout = setTimeout(() => controller.abort(), process.env.REQUEST_TIMEOUT || 8000)
+	var data = await fetch(link, {
+		signal: controller.signal,
+		headers: {
+			'User-Agent': 'UnshortSTI/0.0 (deso pas deso)',
+			'referer': 'https://unshort.johanstick.me',
+		},
+		redirect: 'follow'
+	}).catch(() => null)
+	clearTimeout(timeout)
+
+	// Préparer les données qu'on va utiliser
+	data = {
+		cookies: data.headers.get('set-cookie'),
+		text: await data.text()
+	}
+	
+	// Obtenir les variables nécessaires
+	data['_token'] = data.text.match(/<input type="hidden" name="_token" value="(.*?)">/)?.[1]
+	data['special_id'] = data.text.match(/<input type="hidden" id="special_id" name="special_id" value="(.*?)">/)?.[1]
+
+	// Si on a pas les variables nécessaires, on annule
+	if(!data._token || !data.special_id) return ''
+console.log(data)
+	// Faire une seconde requête pour obtenir le lien original
+	var controller = new AbortController()
+	var timeout = setTimeout(() => controller.abort(), process.env.REQUEST_TIMEOUT || 8000)
+	var redirected = await fetch(link, {
+		method: 'POST',
+		signal: controller.signal,
+		headers: {
+			'cookie': `${data.cookies?.split('; expires')[0]}; g_session=${data.cookies?.split('g_session=')[1].split(';')[0]}`,
+			'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+			'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+			'user-agent': 'UnshortSTI/0.0 (deso pas deso)',
+			'referer': 'https://unshort.johanstick.me',
+		},
+		body: new URLSearchParams({ tos_accepted: 1, privacy_accepted: 1, _token: data._token, special_id: data.special_id }),
+		redirect: 'manual'
+	}).catch(() => null)
+
+	// Retourner le lien si on l'a
+	return redirected.headers.get('location') || ''
+}
 
 // Faire une ou plusieurs requêtes pour tenter d'obtenir l'URL original
 async function getOriginalURL(id, link, oldLink){
@@ -108,7 +161,7 @@ async function getOriginalURL(id, link, oldLink){
 	var redirected = await fetch(link, {
 		signal: controller.signal,
 		headers: {
-			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
+			'User-Agent': domain == 'grabify.link' ? 'UnshortSTI/0.0 (deso pas deso)' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
 			'cookie': domain == 'v.gd' || domain == 'is.gd' ? `preview=${domain == 'v.gd' ? 1 : domain == 'is.gd' ? 0 : null}` : '',
 			'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
 			'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -135,7 +188,18 @@ async function getOriginalURL(id, link, oldLink){
 		redirected = redirected.url
 		redirectionMethod = 'redirected'
 	}
-	else if(redirected){
+	else if(content?.includes(`By clicking continue you agree to the <a target="_blank" href="https://grabify.link/tos">TOS</a> and`)){ // Grabify
+		redirected = await getGrabifyURL(link)
+		if(redirected) redirectionMethod = 'grabify'
+	}
+	else if(content){ // YouTube
+		var youtube = content.match(/<a id="invalid-token-redirect-goto-site-button" role="button" href="(.*?)">Accéder au site<\/a>/)
+		if(youtube){
+			redirected = youtube[1]
+			redirectionMethod = 'youtube'
+		}
+	}
+	if(!redirectionMethod && redirected){ // ne pas mettre un "else" ici
 		redirected = extractUrlFromMetaString(content) // pour certains liens comme t.co
 		redirectionMethod = 'meta' // même si on a pas pu obtenir le lien, c'est voulu
 	}
@@ -144,10 +208,10 @@ async function getOriginalURL(id, link, oldLink){
 	if(!redirected && oldLink) return { r: oldLink, c: content }
 
 	// Si on avait déjà ce lien, on le retourne
-	if(redirected && oldLink && simplifyURL(redirected) == simplifyURL(oldLink)) return { r: oldLink, c: content }
+	if(redirected && typeof redirected == 'string' && oldLink && simplifyURL(redirected) == simplifyURL(oldLink)) return { r: oldLink, c: content }
 
-	// Si on a obtenu le lien à partir d'une meta, on vérifie le lien qu'on vient d'obtenir
-	if(redirected && redirectionMethod == 'meta') return await getOriginalURL(id, redirected, redirected)
+	// Si on a pas obtenu le lien à partir d'une redirection, on vérifie le lien qu'on vient d'obtenir
+	if(redirected && redirectionMethod != 'redirected') return await getOriginalURL(id, redirected, redirected)
 
 	// On finit par retourner le lien (j'sais même pas si ce code est utile, mais bon)
 	return { r: redirected, c: content }
