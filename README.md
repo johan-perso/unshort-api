@@ -1,6 +1,6 @@
 # UnshortAPI
 
-UnshortAPI est une API complètement gratuite et sans clé d'API permettant d'obtenir le lien original d'un lien raccourci. Cette API fonctionne sur la plupart des services de raccourcissement de liens (bit.ly, t.co, is.gd, etc), mais ne fonctionne pas sur les services qui demandent d'effectuer une action pour obtenir le lien original (adf.ly, Grabify, etc).
+UnshortAPI est une API complètement gratuite et sans clé d'API permettant d'obtenir le lien original d'un lien raccourci. Cette API fonctionne sur la plupart des services de raccourcissement de liens (bit.ly, t.co, is.gd, etc), mais ne fonctionne pas sur les services qui demandent d'effectuer une action pour obtenir le lien original (adf.ly par exemple, Grabify est une exception).
 
 
 ## Vous ne voulez pas de l'API ?
