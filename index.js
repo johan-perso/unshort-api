@@ -182,6 +182,14 @@ async function getOriginalURL(id, link, oldLink){
 	// Obtenir le contenu de la page
 	var content = await redirected?.text()
 
+	// Préparer une variable
+	var potentialWarning
+
+	// Si la page comporte un challenge Cloudflare
+	if(content?.includes('<noscript><div id="challenge-error-title"><div class="h2"><span class="icon-wrapper"><div class="heading-icon warning-icon"></div></span><span id="challenge-error-text">Enable JavaScript and cookies to continue</span></div></div></noscript>')){
+		potentialWarning = "La vérification n'a pas pu être complétée à cause d'une vérification anti-robot qu'Unshort n'a pas pu passer."
+	}
+
 	// Obtenir le lien après redirection
 	var redirectionMethod
 	if(redirected?.url && simplifyURL(redirected.url) != simplifyURL(link)){
@@ -205,16 +213,16 @@ async function getOriginalURL(id, link, oldLink){
 	}
 
 	// Si on a pas le contenu de cette page, mais qu'on avait déjà le lien, on retourne l'ancien lien
-	if(!redirected && oldLink) return { r: oldLink, c: content }
+	if(!redirected && oldLink) return { r: oldLink, c: content, w: potentialWarning }
 
 	// Si on avait déjà ce lien, on le retourne
-	if(redirected && typeof redirected == 'string' && oldLink && simplifyURL(redirected) == simplifyURL(oldLink)) return { r: oldLink, c: content }
+	if(redirected && typeof redirected == 'string' && oldLink && simplifyURL(redirected) == simplifyURL(oldLink)) return { r: oldLink, c: content, w: potentialWarning }
 
 	// Si on a pas obtenu le lien à partir d'une redirection, on vérifie le lien qu'on vient d'obtenir
 	if(redirected && redirectionMethod != 'redirected') return await getOriginalURL(id, redirected, redirected)
 
 	// On finit par retourner le lien (j'sais même pas si ce code est utile, mais bon)
-	return { r: redirected, c: content }
+	return { r: redirected, c: content, w: potentialWarning }
 }
 
 // Rediriger vers la documentation
@@ -267,10 +275,11 @@ fastify.post('/', async (req, res) => {
 
 		// Séparer les informations
 		var content = redirected?.c
+		var potentialWarning = redirected?.w
 		redirected = redirected?.r
 
 		// Si on a pas le lien redirigé
-		if(!redirected) throw { statusCode: 302, error: 'Unsupported Link', message: 'Ce lien n\'est pas supporté par notre service.' }
+		if(!redirected) throw { statusCode: 302, error: 'Unsupported Link', message: potentialWarning || 'Ce lien n\'est pas supporté par notre service.' }
 
 	// Vérifier si le lien est safe
 	var isSafe
@@ -289,7 +298,7 @@ fastify.post('/', async (req, res) => {
 	}
 
 	// Retourner le lien
-	return { url: link, redirected, safe: isSafe, metadata }
+	return { url: link, redirected, safe: isSafe, potentialWarning, metadata }
 })
 
 // Démarrer le serveur
