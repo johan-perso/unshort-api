@@ -2,3 +2,5 @@
 pnpm-lock.yaml
 .vercel
 pacage-lock.json
+.idea
+.vscode
