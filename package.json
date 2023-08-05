@@ -1,6 +1,6 @@
 {
 	"name": "unshort-api",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "API pour obtenir le lien original d'un lien raccourci",
 	"main": "index.js",
 	"scripts": {
