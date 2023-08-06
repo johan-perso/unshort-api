@@ -15,6 +15,7 @@
 		"dotenv": "^16.0.3",
 		"fastify": "^4.15.0",
 		"node-fetch": "2.6.9",
+		"quecto": "^1.0.1",
 		"safe-browse-url-lookup": "^0.1.1"
 	},
 	"devDependencies": {

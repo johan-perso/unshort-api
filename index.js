@@ -1,4 +1,5 @@
 // Importer quelques librairies
+const { Quecto } = require('quecto');
 const fetch = require('node-fetch'); process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0 // on s'en fout sah
 const fastify = require('fastify')({ logger: { level: 'silent' } })
 fastify.register(require('@fastify/cors'))
@@ -124,7 +125,7 @@ async function getGrabifyURL(link){
 
 	// Si on a pas les variables nécessaires, on annule
 	if(!data._token || !data.special_id) return ''
-console.log(data)
+	console.log(data)
 	// Faire une seconde requête pour obtenir le lien original
 	var controller = new AbortController()
 	var timeout = setTimeout(() => controller.abort(), process.env.REQUEST_TIMEOUT || 8000)
@@ -146,10 +147,30 @@ console.log(data)
 	return redirected.headers.get('location') || ''
 }
 
+async function getQuectoLink(link, instance) {
+	let client = new Quecto(instance);
+	return (await client.unshortUrl(link));
+}
+
 // Faire une ou plusieurs requêtes pour tenter d'obtenir l'URL original
 async function getOriginalURL(id, link, oldLink){
 	// Si on doit s'arrêter
 	if(global[id] == 'stop') return null
+
+	let instance = link?.split("/");
+	instance.pop();
+	instance.pop();
+	instance = instance.join("/");
+
+	let quectoClient = new Quecto(instance);
+	let isQuecto = await quectoClient.isValidInstance();
+	if (isQuecto) {
+		let quectoLink = await getQuectoLink(link, instance);
+		if (quectoLink) {
+			console.log({ r: quectoLink.original, c: undefined, w: undefined })
+			return { r: quectoLink.original, c: undefined, w: undefined };
+		}
+	}
 
 	// Obtenir le domaine
 	var domain = link?.split('/')?.[2]
