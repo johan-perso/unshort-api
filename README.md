@@ -5,7 +5,7 @@ UnshortAPI est une API complètement gratuite et sans clé d'API permettant d'ob
 
 ## Vous ne voulez pas de l'API ?
 
-UnshortAPI est aussi utilisable depuis un site web, vous pouvez le trouver [ici](https://unshort.johanstick.me) (son code n'est cependant pas open-source).
+UnshortAPI est aussi utilisable depuis un site web, vous pouvez le trouver [ici](https://unshort.johanstick.fr) (son code n'est cependant pas open-source).
 
 
 ## Fonctionnalités
@@ -45,4 +45,4 @@ Le wiki est disponible [ici](https://github.com/johan-perso/unshort-api/wiki).
 
 ## Licence
 
-MIT © [Johan](https://johanstick.me)
+MIT © [Johan](https://johanstick.fr)
