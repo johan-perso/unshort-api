@@ -106,7 +106,7 @@ async function getGrabifyURL(link){
 		signal: controller.signal,
 		headers: {
 			'User-Agent': 'UnshortSTI/0.0 (deso pas deso)',
-			'referer': 'https://unshort.johanstick.me',
+			'referer': 'https://unshort.johanstick.fr',
 		},
 		redirect: 'follow'
 	}).catch(() => null)
@@ -136,7 +136,7 @@ console.log(data)
 			'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
 			'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
 			'user-agent': 'UnshortSTI/0.0 (deso pas deso)',
-			'referer': 'https://unshort.johanstick.me',
+			'referer': 'https://unshort.johanstick.fr',
 		},
 		body: new URLSearchParams({ tos_accepted: 1, privacy_accepted: 1, _token: data._token, special_id: data.special_id }),
 		redirect: 'manual'
